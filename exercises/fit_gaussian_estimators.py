@@ -84,7 +84,8 @@ def test_multivariate_gaussian():
     fig.show()
 
     # Question 6 - Maximum likelihood
-    print(f'({round(max_values[2], NDIGITS)}, {round(max_values[1], NDIGITS)})')
+    print(f'({round(max_values[2], NDIGITS)},'
+          f' {round(max_values[1], NDIGITS)})')
     print(f'Maximum log-likelihood: {round(max_values[0], NDIGITS)}')
 
 
