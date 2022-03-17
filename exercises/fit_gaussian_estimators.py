@@ -83,7 +83,7 @@ def test_multivariate_gaussian():
                       yaxis_title="f1 values")
     fig.show()
 
-    # Question 6 - Maximum likelihood.
+    # Question 6 - Maximum likelihood
     print(f'({round(max_values[2], NDIGITS)},'
           f' {round(max_values[1], NDIGITS)})')
     print(f'Maximum log-likelihood: {round(max_values[0], NDIGITS)}')
