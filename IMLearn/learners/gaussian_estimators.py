@@ -54,7 +54,7 @@ class UnivariateGaussian:
         """
 
         self.mu_ = X.mean()
-        self.var_ = (1 / (X.size - 1)) * sum([(xi - self.mu_)**2 for xi in X])
+        self.var_ = X.var(ddof=0 if self.biased_ else 1)
 
         self.fitted_ = True
         return self
