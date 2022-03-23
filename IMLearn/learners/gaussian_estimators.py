@@ -109,9 +109,8 @@ class UnivariateGaussian:
         log_likelihood: float
             log-likelihood calculated
         """
-        var = sigma**2
-        factor = -X.size * 0.5 * np.log(2 * np.pi * var)
-        exp_denominator = 2 * var
+        factor = -X.size * 0.5 * np.log(2 * np.pi * sigma)
+        exp_denominator = 2 * sigma
         exp_numerator = -sum([(xi - mu)**2 for xi in X])
         exp_expression = exp_numerator / exp_denominator
 
