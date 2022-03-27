@@ -23,7 +23,11 @@ def load_data(filename: str):
     Design matrix and response vector (prices) - either as a single
     DataFrame or a Tuple[DataFrame, Series]
     """
-    raise NotImplementedError()
+    dataframe = pd.read_csv(filename)
+    prices = dataframe['price']
+
+    a = 1
+    return None, prices
 
 
 def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") -> NoReturn:
@@ -43,13 +47,25 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
     output_path: str (default ".")
         Path to folder in which plots are saved
     """
-    raise NotImplementedError()
+    correlation = lambda X, Y: np.cov(X, Y) / (np.std(X) * np.std(Y))
+
+    y_title = "Response values"
+    for ind in range(X.size[1]):
+        cor_value = correlation(X[:, ind], y)
+        col_name = X.columns[ind]
+        x_title = f'{col_name} values'
+        df = pd.DataFrame({x_title: X[:, ind], y_title: y})
+        title = f'Correlation between {col_name} and response vector.\n' \
+                f'Correlation: {cor_value}'
+        fig = px.scatter(df, x=x_title, y=y_title, title=title)
+        fig.write_image(f'{output_path}\\{col_name}_correlation.png')
 
 
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of housing prices dataset
-    raise NotImplementedError()
+    dataset = '..\\datasets\\house_prices.csv'
+    X, y = load_data(dataset)
 
     # Question 2 - Feature evaluation with respect to response
     raise NotImplementedError()
