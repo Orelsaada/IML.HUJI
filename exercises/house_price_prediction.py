@@ -96,4 +96,15 @@ if __name__ == '__main__':
     #   3) Test fitted model over test set
     #   4) Store average and variance of loss over test set
     # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
+    model = LinearRegression()
+    res = []
+    for p in range(10, 101):
+        fraction = p / 100
+        loss_val = 0
+        for _ in range(10):
+            x_sample = train_X.sample(frac=fraction, random_state=1)
+            y_sample = train_y.sample(frac=fraction, random_state=1)
+            model.fit(x_sample, y_sample)
+            loss_val += model.loss(test_X, test_y)
+        res.append(loss_val / 10)
     raise NotImplementedError()
