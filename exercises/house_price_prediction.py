@@ -23,11 +23,26 @@ def load_data(filename: str):
     Design matrix and response vector (prices) - either as a single
     DataFrame or a Tuple[DataFrame, Series]
     """
-    dataframe = pd.read_csv(filename)
-    prices = dataframe['price']
+    dataframe = pd.read_csv(filename).dropna().drop_duplicates()
 
-    a = 1
-    return None, prices
+
+    exclude_columns = ['id', 'date', 'zipcode', 'lat', 'long']
+    dataframe = dataframe.loc[:, ~dataframe.columns.isin(exclude_columns)]
+
+    positive_columns = ['price', 'sqft_living', 'sqft_lot', 'floors',
+                        'sqft_above']
+    for pos_col in positive_columns:
+        dataframe = dataframe[dataframe[pos_col] > 0]
+
+    non_neg_columns = ['bedrooms', 'bathrooms', 'floors', 'waterfront',
+                       'view', 'yr_renovated']
+    for non_neg_col in non_neg_columns:
+        dataframe = dataframe[dataframe[non_neg_col] >= 0]
+
+    prices = dataframe['price']
+    dataframe = dataframe.drop('price', 1)
+
+    return dataframe, prices
 
 
 def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") -> NoReturn:
@@ -50,11 +65,12 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
     correlation = lambda X, Y: np.cov(X, Y) / (np.std(X) * np.std(Y))
 
     y_title = "Response values"
-    for ind in range(X.size[1]):
-        cor_value = correlation(X[:, ind], y)
+    for ind in range(X.shape[1]):
+        relevant_column = X.iloc[:, ind]
+        cor_value = correlation(relevant_column, y)[0][1]
         col_name = X.columns[ind]
         x_title = f'{col_name} values'
-        df = pd.DataFrame({x_title: X[:, ind], y_title: y})
+        df = pd.DataFrame({x_title: relevant_column, y_title: y})
         title = f'Correlation between {col_name} and response vector.\n' \
                 f'Correlation: {cor_value}'
         fig = px.scatter(df, x=x_title, y=y_title, title=title)
@@ -68,10 +84,10 @@ if __name__ == '__main__':
     X, y = load_data(dataset)
 
     # Question 2 - Feature evaluation with respect to response
-    raise NotImplementedError()
+    # feature_evaluation(X, y, './graphs')
 
     # Question 3 - Split samples into training- and testing sets.
-    raise NotImplementedError()
+    train_X, train_y, test_X, test_y = split_train_test(X, y)
 
     # Question 4 - Fit model over increasing percentages of the overall training data
     # For every percentage p in 10%, 11%, ..., 100%, repeat the following 10 times:
