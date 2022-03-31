@@ -41,12 +41,19 @@ if __name__ == '__main__':
     fig1 = px.scatter(israel_temp_day, x='DayOfYear', y='Temp', color="Year")
     # fig1.show()
 
-    a = israel_info.groupby('Month').agg(np.std)
-    fig2 = px.bar(a['Temp'])
+    il_std_temp = israel_info.groupby('Month').agg(np.std)
+    fig2 = px.bar(il_std_temp['Temp'])
     # fig2.show()
 
     # Question 3 - Exploring differences between countries
-    raise NotImplementedError()
+    mean_month_temp = df.groupby(['Month', 'Country']).Temp.agg(
+        np.mean).reset_index()
+    std_month_temp = df.groupby(['Month', 'Country']).Temp.agg(
+        np.std).reset_index()
+    fig3 = px.line(mean_month_temp, x='Month', y='Temp',
+                   color='Country',
+                   error_y=std_month_temp['Temp'])
+    fig3.show()
 
     # Question 4 - Fitting model for different values of `k`
     raise NotImplementedError()
