@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
 pio.templates.default = "simple_white"
-
+from plotly.subplots import make_subplots
 
 def load_data(filename: str):
     """
@@ -96,15 +96,82 @@ if __name__ == '__main__':
     #   3) Test fitted model over test set
     #   4) Store average and variance of loss over test set
     # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
+    np_test_X = test_X.to_numpy()
+    np_test_y = test_y.to_numpy()
     model = LinearRegression()
-    res = []
+    expec = []
+    std = []
     for p in range(10, 101):
         fraction = p / 100
-        loss_val = 0
+        loss_arr = []
         for _ in range(10):
             x_sample = train_X.sample(frac=fraction, random_state=1)
             y_sample = train_y.sample(frac=fraction, random_state=1)
-            model.fit(x_sample, y_sample)
-            loss_val += model.loss(test_X, test_y)
-        res.append(loss_val / 10)
-    raise NotImplementedError()
+            model.fit(x_sample.to_numpy(), y_sample.to_numpy())
+            loss_arr.append(model.loss(np_test_X, np_test_y))
+
+        loss_arr = np.array(loss_arr)
+        loss_expec = loss_arr.mean()
+        loss_std = loss_arr.std()
+        expec.append(loss_expec)
+        std.append(loss_std)
+
+    expec = np.array(expec)
+    std = np.array(std)
+
+
+    p_values = np.array(range(10, 101))
+
+    frames, preds = [], []
+    for _ in range(10):
+        # preds.append(y_hat)
+        frames.append(go.Frame(
+            data=[
+                go.Scatter(x=p_values, y=test_y, mode="markers+lines",
+                           name="Real Points",
+                           marker=dict(color="black", opacity=.7)),
+                go.Scatter(x=train_X, y=train_y, mode="markers",
+                           name="Observed "
+                                                                 "Points",
+                           marker=dict(color="red", opacity=.7)),
+                go.Scatter(x=train_X, y=model.predict(train_X.to_numpy()),
+                           mode="markers+lines",
+                           name="Predicted Points",
+                           marker=dict(color="blue", opacity=.7))],
+            layout=go.Layout(
+                title_text="a",
+                xaxis={"title": r"$x$"},
+                yaxis={"title": r"$y$", "range": [-6, 10]})))
+
+    # mean_pred, var_pred = np.mean(preds, axis=0), np.var(preds, axis=0)
+    for i in range(len(frames)):
+        frames[i]["data"] = (go.Scatter(x=p_values, y=expec,
+                                        mode="markers+lines",
+                                        name="Mean Prediction",
+                                        line=dict(dash="dash"),
+                                        marker=dict(color="green",
+                                                    opacity=.7)),
+                             go.Scatter(x=p_values, y=expec - 2 * std,
+                                        fill=None, mode="lines",
+                                        line=dict(color="lightgrey"),
+                                        showlegend=False),
+                             go.Scatter(x=p_values, y=expec + 2 * std,
+                                        fill='tonexty', mode="lines",
+                                        line=dict(color="lightgrey"),
+                                        showlegend=False),) + frames[i]["data"]
+
+    fig = go.Figure(data=frames[0]["data"],
+                    frames=frames[1:],
+                    layout=go.Layout(
+                        title=frames[0]["layout"]["title"],
+                        xaxis=frames[0]["layout"]["xaxis"],
+                        yaxis=frames[0]["layout"]["yaxis"],
+                        updatemenus=[dict(visible=True,
+                                          type="buttons",
+                                          buttons=[dict(label="Play",
+                                                        method="animate",
+                                                        args=[None, dict(
+                                                            frame={
+                                                                "duration": 1000})])])]))
+
+    fig.show()

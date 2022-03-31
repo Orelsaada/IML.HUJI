@@ -33,6 +33,11 @@ class LinearRegression(BaseEstimator):
         super().__init__()
         self.include_intercept_, self.coefs_ = include_intercept, None
 
+    def add_ones_column(self, X):
+        new_X = np.ones((X.shape[0], X.shape[1] + 1))
+        new_X[:, :-1] = X
+        return new_X
+
     def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
         """
         Fit Least Squares model to given samples
@@ -50,9 +55,7 @@ class LinearRegression(BaseEstimator):
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
         if self.include_intercept_:
-            new_X = np.ones((X.shape[0]+1, X.size[1]))
-            new_X[:, :-1] = X
-            X = new_X
+            new_X = self.add_ones_column(X)
         self.coefs_ = pinv(X) @ y
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
