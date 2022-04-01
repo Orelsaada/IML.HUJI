@@ -53,10 +53,19 @@ if __name__ == '__main__':
     fig3 = px.line(mean_month_temp, x='Month', y='Temp',
                    color='Country',
                    error_y=std_month_temp['Temp'])
-    fig3.show()
+    # fig3.show()
 
     # Question 4 - Fitting model for different values of `k`
-    raise NotImplementedError()
+    y_israel = israel_info['Temp']
+    X_israel = israel_info.loc[:, israel_info.columns != 'Temp']
+    train_X, train_y, test_X, test_y = split_train_test(X_israel, y_israel)
+    poly_model = PolynomialFitting(3).fit(train_X.to_numpy(),
+                                          train_y.to_numpy())
+    for k in range(1,11):
+        poly_model = PolynomialFitting(k).fit(train_X.to_numpy(),
+                                              train_y.to_numpy())
+        loss_val = poly_model.loss(test_X.to_numpy(), test_y.to_numpy())
+        print(loss_val)
 
     # Question 5 - Evaluating fitted model on different countries
     raise NotImplementedError()
