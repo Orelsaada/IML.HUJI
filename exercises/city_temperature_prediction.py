@@ -57,15 +57,34 @@ if __name__ == '__main__':
 
     # Question 4 - Fitting model for different values of `k`
     y_israel = israel_info['Temp']
-    X_israel = israel_info.loc[:, israel_info.columns != 'Temp']
+    X_israel = israel_info['DayOfYear']
     train_X, train_y, test_X, test_y = split_train_test(X_israel, y_israel)
-    poly_model = PolynomialFitting(3).fit(train_X.to_numpy(),
-                                          train_y.to_numpy())
-    for k in range(1,11):
-        poly_model = PolynomialFitting(k).fit(train_X.to_numpy(),
-                                              train_y.to_numpy())
-        loss_val = poly_model.loss(test_X.to_numpy(), test_y.to_numpy())
+    train_X = train_X.to_numpy()
+    train_y = train_y.to_numpy()
+    test_X = test_X.to_numpy()
+    test_y = test_y.to_numpy()
+    pd_loss = {'K degree': [], 'Loss': []}
+    for k in range(1, 11):
+        poly_model = PolynomialFitting(k).fit(train_X,
+                                              train_y)
+        loss_val = poly_model.loss(test_X, test_y)
+        pd_loss['K degree'].append(k)
+        pd_loss['Loss'].append(loss_val)
         print(loss_val)
 
+    fig4 = px.bar(pd_loss, x='K degree', y='Loss')
+    # fig4.show()
+
     # Question 5 - Evaluating fitted model on different countries
-    raise NotImplementedError()
+    poly_model = PolynomialFitting(6).fit(X_israel, y_israel)
+    countries = ['Jordan', 'South Africa', 'The Netherlands']
+    country_loss = {'Country': [], 'Loss': []}
+
+    for country in countries:
+        country_info = df[df['Country'] == country]
+        country_loss['Country'].append(country)
+        loss = poly_model.loss(country_info['DayOfYear'], country_info['Temp'])
+        country_loss['Loss'].append(loss)
+
+    fig5 = px.bar(country_loss, x='Country', y='Loss')
+    fig5.show()
