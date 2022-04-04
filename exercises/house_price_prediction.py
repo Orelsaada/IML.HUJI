@@ -25,20 +25,28 @@ def load_data(filename: str):
     """
     dataframe = pd.read_csv(filename).dropna().drop_duplicates()
 
+    # handle categorical zipcode column.
+    dataframe["zipcode"] = dataframe["zipcode"].astype(int)
+    dataframe = pd.get_dummies(dataframe, prefix='zipcode',
+                               columns=['zipcode'])
 
-    exclude_columns = ['id', 'date', 'zipcode', 'lat', 'long']
+    # columns to remove
+    exclude_columns = ['id', 'date', 'lat', 'long']
     dataframe = dataframe.loc[:, ~dataframe.columns.isin(exclude_columns)]
 
+    # make sure the values of those columns are greater than 0.
     positive_columns = ['price', 'sqft_living', 'sqft_lot', 'floors',
                         'sqft_above']
     for pos_col in positive_columns:
         dataframe = dataframe[dataframe[pos_col] > 0]
 
+    # make sure the values of those columns are greater or equal 0.
     non_neg_columns = ['bedrooms', 'bathrooms', 'floors', 'waterfront',
                        'view', 'yr_renovated']
     for non_neg_col in non_neg_columns:
         dataframe = dataframe[dataframe[non_neg_col] >= 0]
 
+    # split the data and the response
     prices = dataframe['price']
     dataframe = dataframe.drop('price', 1)
 
@@ -84,7 +92,7 @@ if __name__ == '__main__':
     X, y = load_data(dataset)
 
     # Question 2 - Feature evaluation with respect to response
-    # feature_evaluation(X, y, './graphs')
+    feature_evaluation(X, y)
 
     # Question 3 - Split samples into training- and testing sets.
     train_X, train_y, test_X, test_y = split_train_test(X, y)
@@ -131,5 +139,8 @@ if __name__ == '__main__':
                                     line=dict(color="lightgrey"),
                                     showlegend=False), ])
 
-
+    fig.update_layout(title_text='Mean loss over increasing percentage of '
+                                 'train set',
+                      xaxis={"title": "Train set percentage"},
+                      yaxis={"title": "Mean loss"})
     fig.show()

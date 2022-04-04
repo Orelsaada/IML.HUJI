@@ -33,23 +33,10 @@ def split_train_test(X: pd.DataFrame, y: pd.Series, train_proportion: float = .2
         Responses of test samples
 
     """
-    train_rows_number = int(np.ceil(y.size * train_proportion))
-    # test_rows_number = np.floor(y.size * (1 - train_proportion))
-    # mask = np.random.choice([False, True], y.size,
-    #                         p=[test_rows_number, train_rows_number])
-    # not_mask = np.logical_not(mask)
-    # train_X = X[mask, :]
-    # train_Y = y[mask]
-    # test_X = X[not_mask, :]
-    # test_Y = y[not_mask]
-    indices = np.random.permutation(X.shape[0])
-    training_idx, test_idx = indices[:train_rows_number+1],\
-                             indices[train_rows_number+1:]
-    axis = 0
-    train_X = np.take(X, training_idx, axis)
-    train_Y = np.take(y, training_idx, axis)
-    test_X = np.take(X, test_idx, axis)
-    test_Y = np.take(y, test_idx, axis)
+    train_X = X.sample(frac=train_proportion)
+    train_Y = y.reindex(train_X.index)
+    test_X = X.sample(frac=1-train_proportion)
+    test_Y = y.reindex(test_X.index)
     return train_X, train_Y, test_X, test_Y
 
 

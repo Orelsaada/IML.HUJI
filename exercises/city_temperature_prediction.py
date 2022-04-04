@@ -39,11 +39,12 @@ if __name__ == '__main__':
     israel_info = df[df['Country'] == 'Israel']
     israel_temp_day = israel_info[['DayOfYear', 'Temp', 'Year']]
     fig1 = px.scatter(israel_temp_day, x='DayOfYear', y='Temp', color="Year")
-    # fig1.show()
+    fig1.show()
 
     il_std_temp = israel_info.groupby('Month').agg(np.std)
     fig2 = px.bar(il_std_temp['Temp'])
-    # fig2.show()
+    fig2.update_layout(yaxis={"title": "Daily Temp STD"})
+    fig2.show()
 
     # Question 3 - Exploring differences between countries
     mean_month_temp = df.groupby(['Month', 'Country']).Temp.agg(
@@ -53,7 +54,8 @@ if __name__ == '__main__':
     fig3 = px.line(mean_month_temp, x='Month', y='Temp',
                    color='Country',
                    error_y=std_month_temp['Temp'])
-    # fig3.show()
+    fig3.update_layout(yaxis={"title": "Avg monthly temp"})
+    fig3.show()
 
     # Question 4 - Fitting model for different values of `k`
     y_israel = israel_info['Temp']
@@ -67,13 +69,13 @@ if __name__ == '__main__':
     for k in range(1, 11):
         poly_model = PolynomialFitting(k).fit(train_X,
                                               train_y)
-        loss_val = poly_model.loss(test_X, test_y)
+        loss_val = round(poly_model.loss(test_X, test_y), 2)
         pd_loss['K degree'].append(k)
         pd_loss['Loss'].append(loss_val)
         print(loss_val)
 
     fig4 = px.bar(pd_loss, x='K degree', y='Loss')
-    # fig4.show()
+    fig4.show()
 
     # Question 5 - Evaluating fitted model on different countries
     poly_model = PolynomialFitting(6).fit(X_israel, y_israel)
@@ -87,4 +89,5 @@ if __name__ == '__main__':
         country_loss['Loss'].append(loss)
 
     fig5 = px.bar(country_loss, x='Country', y='Loss')
+    fig5.update_layout(yaxis={"title": "Model's error"})
     fig5.show()
