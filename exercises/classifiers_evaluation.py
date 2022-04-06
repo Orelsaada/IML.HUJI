@@ -29,6 +29,14 @@ def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
     return data[:, :2], data[:, 2].astype(int)
 
 
+class Callback:
+    def __init__(self):
+        self.losses = []
+
+    def perceptron_callback(self, perceptron, X, y):
+        self.losses.append(perceptron._loss(X, y))
+
+
 def run_perceptron():
     """
     Fit and plot fit progression of the Perceptron algorithm over both the linearly separable and inseparable datasets
@@ -38,14 +46,19 @@ def run_perceptron():
     """
     for n, f in [("Linearly Separable", "linearly_separable.npy"), ("Linearly Inseparable", "linearly_inseparable.npy")]:
         # Load dataset
-        raise NotImplementedError()
+        X, y = load_dataset(f)
 
         # Fit Perceptron and record loss in each fit iteration
-        losses = []
-        raise NotImplementedError()
+        # losses = []
+        callback = Callback()
+        model = Perceptron(callback=callback.perceptron_callback).fit(X, y)
+        losses = np.array(callback.losses)
+        df = pd.DataFrame({"losses": losses,
+                           "iteration": range(1, losses.size+1)})
 
         # Plot figure of loss as function of fitting iteration
-        raise NotImplementedError()
+        fig = px.line(df, x="iteration", y="losses")
+        fig.show()
 
 
 def get_ellipse(mu: np.ndarray, cov: np.ndarray):
@@ -103,4 +116,4 @@ def compare_gaussian_classifiers():
 if __name__ == '__main__':
     np.random.seed(0)
     run_perceptron()
-    compare_gaussian_classifiers()
+    # compare_gaussian_classifiers()

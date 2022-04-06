@@ -64,16 +64,18 @@ class Perceptron(BaseEstimator):
         :param w:
         :return: Indicator if such w exists and the w.
         """
-        for xi in X:
-            for yi in y:
-                if yi * (w.transpose() @ xi) < 0:
-                    return w + (yi * xi), True
+        for i in range(min(y.size, X.shape[0])):
+            xi = X[i, :]
+            yi = y[i]
+            if (yi * (w.T @ xi)[0]) <= 0:
+                return (w.T + (yi * xi)).T, True
         return w, False
 
     def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
         """
-        Fit a halfspace to to given samples. Iterate over given data as long as there exists a sample misclassified
-        or that did not reach `self.max_iter_`
+        Fit a halfspace to to given samples. Iterate over given data as long as
+        there exists a sample misclassified or that did not reach
+        `self.max_iter_`
 
         Parameters
         ----------
@@ -88,10 +90,11 @@ class Perceptron(BaseEstimator):
         Fits model with or without an intercept depending on value of `self.fit_intercept_`
         """
         it = 0
-        w = np.zeros(y.shape)
-        while it < self.max_iter_:
-            exist, w = self._fix_misclassifcation(X, y, w)
+        w = np.zeros((X.shape[1], 1))
+        while it < min(self.max_iter_, y.size):
+            w, exist = self._fix_misclassifcation(X, y, w)
             self.coefs_ = w
+            self.callback_(self, X, y)
             if not exist:
                 break
             it += 1
@@ -110,7 +113,10 @@ class Perceptron(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        return X.T @ self.coefs_ > 0
+        res = X @ self.coefs_
+        for ind in range(len(res)):
+            res[ind] = 1 if res[ind] > 0 else -1
+        return res
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
