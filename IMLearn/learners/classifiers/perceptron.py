@@ -56,20 +56,10 @@ class Perceptron(BaseEstimator):
         self.callback_ = callback
         self.coefs_ = None
 
-    def _fix_misclassifcation(self, X, y, w):
-        """
-        Helper function for fit.
-        :param X:
-        :param y:
-        :param w:
-        :return: Indicator if such w exists and the w.
-        """
-        for i in range(min(y.size, X.shape[0])):
-            xi = X[i, :]
-            yi = y[i]
-            if (yi * (w.T @ xi)[0]) <= 0:
-                return (w.T + (yi * xi)).T, True
-        return w, False
+    def __add_ones_column(self, X):
+        new_X = np.ones((X.shape[0], X.shape[1] + 1))
+        new_X[:, 1:] = X
+        return new_X
 
     def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
         """
@@ -90,12 +80,17 @@ class Perceptron(BaseEstimator):
         Fits model with or without an intercept depending on value of `self.fit_intercept_`
         """
         it = 0
-        w = np.zeros((X.shape[1], 1))
-        while it < min(self.max_iter_, y.size):
-            w, exist = self._fix_misclassifcation(X, y, w)
-            self.coefs_ = w
-            self.callback_(self, X, y)
-            if not exist:
+        w = np.zeros((X.shape[1]+1, 1))
+        X = self.__add_ones_column(X) if self.include_intercept_ else X
+        while it < self.max_iter_:
+            for i, xi in enumerate(X):
+                if (y[i] * (w.T @ xi.T)) <= 0:
+                    w += xi.reshape(-1, 1) * y[i]
+                    self.coefs_ = w
+                    self.callback_(self, xi, y[i])
+                    break
+            # There is no misclassified sample
+            else:
                 break
             it += 1
 
@@ -113,9 +108,9 @@ class Perceptron(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
+        X = self.__add_ones_column(X) if self.include_intercept_ else X
         res = X @ self.coefs_
-        for ind in range(len(res)):
-            res[ind] = 1 if res[ind] > 0 else -1
+        res = np.where(res > 0, 1, -1)
         return res
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
@@ -136,4 +131,4 @@ class Perceptron(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        return misclassification_error(y, self._predict(X))
+        return misclassification_error(y.reshape((-1, 1)), self._predict(X))

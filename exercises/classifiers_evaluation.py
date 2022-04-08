@@ -29,14 +29,6 @@ def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
     return data[:, :2], data[:, 2].astype(int)
 
 
-class Callback:
-    def __init__(self):
-        self.losses = []
-
-    def perceptron_callback(self, perceptron, X, y):
-        self.losses.append(perceptron._loss(X, y))
-
-
 def run_perceptron():
     """
     Fit and plot fit progression of the Perceptron algorithm over both the linearly separable and inseparable datasets
@@ -49,15 +41,18 @@ def run_perceptron():
         X, y = load_dataset(f)
 
         # Fit Perceptron and record loss in each fit iteration
-        # losses = []
-        callback = Callback()
-        model = Perceptron(callback=callback.perceptron_callback).fit(X, y)
-        losses = np.array(callback.losses)
+        losses = []
+        callback = lambda perceptron, _1, _2:\
+            losses.append(perceptron._loss(X, y))
+        model = Perceptron(callback=callback).fit(X, y)
         df = pd.DataFrame({"losses": losses,
-                           "iteration": range(1, losses.size+1)})
+                           "iteration": range(1, len(losses)+1)})
 
         # Plot figure of loss as function of fitting iteration
         fig = px.line(df, x="iteration", y="losses")
+        title = f'Model\'s loss as function of the iterations where data is ' \
+            f'{n}'
+        fig.update_layout(title=title)
         fig.show()
 
 
