@@ -46,7 +46,50 @@ class LDA(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        self.classes_ = np.unique(y)
+        K = len(self.classes_)
+
+        self.pi_ = np.zeros((K, 1))
+
+        # map between yi to its class
+        sample_class_map = dict()
+
+        self.mu_ = np.zeros((K, X.shape[1]))
+        for k in self.classes_:
+            mu_k = np.zeros(X[0].shape)
+            n_k = 0
+            for i, xi in enumerate(X):
+                if y[i] == k:
+                    mu_k += xi
+                    n_k += 1
+                    sample_class_map[y[i]] = k
+            mu_k /= n_k
+            self.pi_[k] = n_k / y.size
+            self.mu_[k] = mu_k
+
+        cov = np.zeros((X.shape[1], X.shape[1]))
+        for i, xi in enumerate(X):
+            mu_yi = self.mu_[sample_class_map[y[i]]]
+            cov += (xi - mu_yi) @ (xi - mu_yi).T
+        self.cov_ = cov
+
+        self._cov_inv = inv(self.cov_)
+
+    def __argmax_k(self, xi: np.ndarray) -> int:
+        a_k = (self._cov_inv @ self.mu_[0])
+        b_k = np.log(self.pi_) - 0.5 * self.mu_[0] @ self._cov_inv @ \
+              self.mu_[0]
+        max_val = (a_k.T @ xi) + b_k
+        max_k = 0
+        for k in range(1, len(self.classes_)):
+            a_k = (self._cov_inv @ self.mu_[k])
+            b_k = np.log(self.pi_) - 0.5 * self.mu_[k] @ self._cov_inv @ \
+                  self.mu_[k]
+            new_val = (a_k.T @ xi) + b_k
+            if new_val > max_val:
+                max_val = new_val
+                max_k = k
+        return max_k
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -62,7 +105,10 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        response = np.zeros((X.shape[0], 1))
+        for i, xi in enumerate(X):
+            response[i] = self.__argmax_k(xi)
+        return response
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -102,4 +148,4 @@ class LDA(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        raise NotImplementedError()
+        return misclassification_error(y.reshape((-1, 1)), self.predict(X))
