@@ -70,20 +70,21 @@ class LDA(BaseEstimator):
         cov = np.zeros((X.shape[1], X.shape[1]))
         for i, xi in enumerate(X):
             mu_yi = self.mu_[sample_class_map[y[i]]]
-            cov += (xi - mu_yi) @ (xi - mu_yi).T
-        self.cov_ = cov
+            cov += (xi - mu_yi).reshape((-1, 1)) @\
+                   (xi - mu_yi).reshape((1, -1))
+        self.cov_ = cov / (y.size - K)
 
         self._cov_inv = inv(self.cov_)
 
     def __argmax_k(self, xi: np.ndarray) -> int:
         a_k = (self._cov_inv @ self.mu_[0])
-        b_k = np.log(self.pi_) - 0.5 * self.mu_[0] @ self._cov_inv @ \
+        b_k = np.log(self.pi_[0]) - 0.5 * self.mu_[0] @ self._cov_inv @ \
               self.mu_[0]
         max_val = (a_k.T @ xi) + b_k
         max_k = 0
         for k in range(1, len(self.classes_)):
             a_k = (self._cov_inv @ self.mu_[k])
-            b_k = np.log(self.pi_) - 0.5 * self.mu_[k] @ self._cov_inv @ \
+            b_k = np.log(self.pi_[k]) - 0.5 * self.mu_[k] @ self._cov_inv @ \
                   self.mu_[k]
             new_val = (a_k.T @ xi) + b_k
             if new_val > max_val:

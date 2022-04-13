@@ -1,4 +1,5 @@
 from IMLearn.learners.classifiers import Perceptron, LDA, GaussianNaiveBayes
+from IMLearn.utils import split_train_test
 from typing import Tuple
 from utils import *
 import plotly.graph_objects as go
@@ -81,22 +82,51 @@ def get_ellipse(mu: np.ndarray, cov: np.ndarray):
     return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black")
 
 
+def predictions_plot(gnb_predict, lda_predict, X, y):
+    lda_predict = lda_predict.reshape(y.shape).astype(int)
+    fig = make_subplots(rows=1, cols=2, specs=[[{'type': 'scene'},
+                                               {'type': 'scene'}]])
+
+    fig.add_trace(
+        go.Scatter3d(x=X[:, 0], y=X[:, 1], z=y, mode='markers'),
+        row=1, col=1
+    )
+
+    fig.add_trace(
+        go.Scatter3d(x=X[:, 0], y=X[:, 1], z=lda_predict, mode='markers'),
+        row=1, col=1
+    )
+
+    fig.add_trace(
+        go.Scatter3d(x=X[:, 0], y=X[:, 1], z=y, mode='markers'),
+        row=1, col=2
+    )
+
+    fig.update_layout(height=600, width=1500,
+                      title_text="Side By Side Subplots")
+    fig.show()
+
 def compare_gaussian_classifiers():
     """
     Fit both Gaussian Naive Bayes and LDA classifiers on both gaussians1 and gaussians2 datasets
     """
     for f in ["gaussian1.npy", "gaussian2.npy"]:
         # Load dataset
-        raise NotImplementedError()
+        X, y = load_dataset(f)
 
         # Fit models and predict over training set
-        raise NotImplementedError()
+        # train_X, train_y, test_X, test_y = split_train_test(X, y)
+        # train_X, train_y, test_X, test_y = train_X.to_numpy(), \
+        #                                    train_y.to_numpy(), \
+        #                                    test_X.to_numpy(), test_y.to_numpy()
+        lda = LDA().fit(X, y)
+        gnb = GaussianNaiveBayes().fit(X, y)
 
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
         # Create subplots
         from IMLearn.metrics import accuracy
-        raise NotImplementedError()
+        predictions_plot(lda.predict(X), lda.predict(X), X, y)
 
         # Add traces for data-points setting symbols and colors
         raise NotImplementedError()
@@ -110,5 +140,5 @@ def compare_gaussian_classifiers():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    run_perceptron()
-    # compare_gaussian_classifiers()
+    # run_perceptron()
+    compare_gaussian_classifiers()
