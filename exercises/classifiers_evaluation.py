@@ -83,27 +83,23 @@ def get_ellipse(mu: np.ndarray, cov: np.ndarray):
 
 
 def predictions_plot(gnb_predict, lda_predict, X, y):
-    lda_predict = lda_predict.reshape(y.shape).astype(int)
-    fig = make_subplots(rows=1, cols=2, specs=[[{'type': 'scene'},
-                                               {'type': 'scene'}]])
+    lda_predict = lda_predict.reshape(y.shape).astype(str)
+    y = y.astype(str)
+    fig = make_subplots(rows=1, cols=2)
 
     fig.add_trace(
-        go.Scatter3d(x=X[:, 0], y=X[:, 1], z=y, mode='markers'),
+        px.scatter(x=X[:, 0], y=X[:, 1], color=lda_predict),
         row=1, col=1
     )
 
     fig.add_trace(
-        go.Scatter3d(x=X[:, 0], y=X[:, 1], z=lda_predict, mode='markers'),
-        row=1, col=1
-    )
-
-    fig.add_trace(
-        go.Scatter3d(x=X[:, 0], y=X[:, 1], z=y, mode='markers'),
+        px.scatter(x=X[:, 0], y=X[:, 1]),
         row=1, col=2
     )
 
     fig.update_layout(height=600, width=1500,
                       title_text="Side By Side Subplots")
+    # fig = px.scatter(X, x=X[:, 0], y=X[:, 1], color=lda_predict)
     fig.show()
 
 def compare_gaussian_classifiers():
@@ -113,20 +109,23 @@ def compare_gaussian_classifiers():
     for f in ["gaussian1.npy", "gaussian2.npy"]:
         # Load dataset
         X, y = load_dataset(f)
+        X_pd = pd.DataFrame(X)
+        y = pd.Series(y)
 
         # Fit models and predict over training set
-        # train_X, train_y, test_X, test_y = split_train_test(X, y)
-        # train_X, train_y, test_X, test_y = train_X.to_numpy(), \
-        #                                    train_y.to_numpy(), \
-        #                                    test_X.to_numpy(), test_y.to_numpy()
-        lda = LDA().fit(X, y)
-        gnb = GaussianNaiveBayes().fit(X, y)
+        train_X, train_y, test_X, test_y = split_train_test(X_pd, y)
+        train_X, train_y, test_X, test_y = train_X.to_numpy(), \
+                                           train_y.to_numpy(), \
+                                           test_X.to_numpy(), test_y.to_numpy()
+        lda = LDA().fit(train_X, train_y)
+        gnb = GaussianNaiveBayes().fit(train_X, train_y)
 
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
         # Create subplots
         from IMLearn.metrics import accuracy
-        predictions_plot(lda.predict(X), lda.predict(X), X, y)
+        predictions_plot(lda.predict(test_X), lda.predict(test_X), test_X,
+                         test_y)
 
         # Add traces for data-points setting symbols and colors
         raise NotImplementedError()
