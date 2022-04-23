@@ -42,13 +42,32 @@ class GaussianNaiveBayes(BaseEstimator):
         """
         self.classes_ = np.unique(y)
         n_classes = len(self.classes_)
-        self.pi_, self.mu_, self.vars_ = np.zeros(n_classes), np.zeros(n_classes), np.zeros(n_classes)
+        n_features = X.shape[1]
+        shape = (n_classes, n_features)
+        self.pi_, self.mu_, self.vars_ = np.zeros(n_classes), np.zeros(shape), \
+                                         np.zeros(shape)
         m = len(X)
         for i, cls in enumerate(self.classes_):
             n_k = (y == cls).sum()
             self.pi_[i] = n_k / m
             self.mu_[i] = X[y == cls, :].sum() / n_k
-            # self.vars_[i] = np.var(X[y == cls], axis=0)
+            self.vars_[i] = np.var(X[y == cls], axis=0)
+
+    def __argmax_k(self, xi: np.ndarray) -> int:
+        a_k = (self._cov_inv @ self.mu_[0])
+        b_k = np.log(self.pi_[0]) - 0.5 * self.mu_[0] @ self._cov_inv @ \
+              self.mu_[0]
+        max_val = (a_k.T @ xi) + b_k
+        max_k = 0
+        for k in range(1, len(self.classes_)):
+            a_k = (self._cov_inv @ self.mu_[k])
+            b_k = np.log(self.pi_[k]) - 0.5 * self.mu_[k] @ self._cov_inv @ \
+                  self.mu_[k]
+            new_val = (a_k.T @ xi) + b_k
+            if new_val > max_val:
+                max_val = new_val
+                max_k = k
+        return max_k
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -64,7 +83,10 @@ class GaussianNaiveBayes(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        response = np.zeros((X.shape[0], 1))
+        for i, xi in enumerate(X):
+            response[i] = self.__argmax_k(xi)
+        return response
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
