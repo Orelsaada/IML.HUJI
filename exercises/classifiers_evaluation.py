@@ -82,26 +82,6 @@ def get_ellipse(mu: np.ndarray, cov: np.ndarray):
     return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black")
 
 
-def predictions_plot(gnb_predict, lda_predict, X, y):
-    lda_predict = lda_predict.reshape(y.shape).astype(str)
-    y = y.astype(str)
-    fig = make_subplots(rows=1, cols=2)
-
-    fig.add_trace(
-        px.scatter(x=X[:, 0], y=X[:, 1], color=lda_predict),
-        row=1, col=1
-    )
-
-    fig.add_trace(
-        px.scatter(x=X[:, 0], y=X[:, 1]),
-        row=1, col=2
-    )
-
-    fig.update_layout(height=600, width=1500,
-                      title_text="Side By Side Subplots")
-    # fig = px.scatter(X, x=X[:, 0], y=X[:, 1], color=lda_predict)
-    fig.show()
-
 def compare_gaussian_classifiers():
     """
     Fit both Gaussian Naive Bayes and LDA classifiers on both gaussians1 and gaussians2 datasets
@@ -124,8 +104,30 @@ def compare_gaussian_classifiers():
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
         # Create subplots
         from IMLearn.metrics import accuracy
-        predictions_plot(lda.predict(test_X), lda.predict(test_X), test_X,
-                         test_y)
+        lda_predict = lda.predict(test_X).reshape(test_y.shape)
+        lda_accuracy = round(accuracy(test_y, lda_predict), 2)
+
+        fig = make_subplots(rows=1, cols=2,
+                            subplot_titles=[f'LDA - accuracy {lda_accuracy}',
+                                            "GNB"],
+                            horizontal_spacing=0.01, vertical_spacing=.03)
+
+        for i, prediction in enumerate([lda_predict]):
+            fig.add_traces(go.Scatter(x=test_X[:, 0], y=test_X[:, 1],
+                                      mode="markers",
+                                      showlegend=False,
+                                      marker=dict(color=prediction,
+                                                  symbol=test_y,
+                                                  line=dict(color="black",
+                                                            width=1))),
+                           rows=(i // 3) + 1, cols=(i % 3) + 1)
+
+        fig.update_layout(
+            title=f'{f.split(".")[0]} Dataset',
+            margin=dict(t=100)) \
+            .update_xaxes(visible=False).update_yaxes(visible=False)
+
+        fig.show()
 
         # Add traces for data-points setting symbols and colors
         raise NotImplementedError()

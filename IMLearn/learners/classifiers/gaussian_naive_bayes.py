@@ -48,7 +48,7 @@ class GaussianNaiveBayes(BaseEstimator):
             n_k = (y == cls).sum()
             self.pi_[i] = n_k / m
             self.mu_[i] = X[y == cls, :].sum() / n_k
-            self.vars_[i] = np.var(X[y == cls], axis=0)
+            # self.vars_[i] = np.var(X[y == cls], axis=0)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
