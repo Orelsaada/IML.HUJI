@@ -50,7 +50,7 @@ class GaussianNaiveBayes(BaseEstimator):
         for i, cls in enumerate(self.classes_):
             n_k = (y == cls).sum()
             self.pi_[i] = n_k / m
-            self.mu_[i] = X[y == cls, :].sum() / n_k
+            self.mu_[i] = np.mean(X[y == cls], axis=0)
             self.vars_[i] = np.var(X[y == cls], axis=0)
 
     def _pdf(self, cls_idx, xi):
@@ -83,7 +83,7 @@ class GaussianNaiveBayes(BaseEstimator):
                 class_conditional = np.sum(np.log(self._pdf(idx, xi)))
                 posterior = prior + class_conditional
                 posteriors.append(posterior)
-            pred.append(self.classes_(np.argmax(posteriors)))
+            pred.append(self.classes_[np.argmax(posteriors)])
 
         return np.array(pred)
 
@@ -111,7 +111,7 @@ class GaussianNaiveBayes(BaseEstimator):
             for idx, cls in enumerate(self.classes_):
                 sample_likelihood.append(self._pdf(idx, xi))
             res.append(sample_likelihood)
-            
+
         return np.array(res)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
