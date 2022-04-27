@@ -75,18 +75,22 @@ class GaussianNaiveBayes(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        pred = []
+        # pred = []
+        #
+        # for xi in X:
+        #     posteriors = []
+        #     for idx, cls in enumerate(self.classes_):
+        #         prior = np.log(self.pi_[idx])
+        #         class_conditional = np.sum(np.log(self._pdf(idx, xi)))
+        #         posterior = prior + class_conditional
+        #         posteriors.append(posterior)
+        #     pred.append(self.classes_[np.argmax(posteriors)])
+        #
+        # return np.array(pred)
 
-        for xi in X:
-            posteriors = []
-            for idx, cls in enumerate(self.classes_):
-                prior = np.log(self.pi_[idx])
-                class_conditional = np.sum(np.log(self._pdf(idx, xi)))
-                posterior = prior + class_conditional
-                posteriors.append(posterior)
-            pred.append(self.classes_[np.argmax(posteriors)])
+        likelihood = self.likelihood(X)
+        return np.argmax(likelihood, axis=0)
 
-        return np.array(pred)
 
     def _class_likelihood(self, X, cls):
         cov = np.diag(self.vars_[cls])

@@ -76,22 +76,6 @@ class LDA(BaseEstimator):
 
         self._cov_inv = inv(self.cov_)
 
-    def __argmax_k(self, xi: np.ndarray) -> int:
-        a_k = (self._cov_inv @ self.mu_[0])
-        b_k = np.log(self.pi_[0]) - 0.5 * self.mu_[0] @ self._cov_inv @ \
-              self.mu_[0]
-        max_val = (a_k.T @ xi) + b_k
-        max_k = 0
-        for k in range(1, len(self.classes_)):
-            a_k = (self._cov_inv @ self.mu_[k])
-            b_k = np.log(self.pi_[k]) - 0.5 * self.mu_[k] @ self._cov_inv @ \
-                  self.mu_[k]
-            new_val = (a_k.T @ xi) + b_k
-            if new_val > max_val:
-                max_val = new_val
-                max_k = k
-        return max_k
-
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
         Predict responses for given samples using fitted estimator
@@ -106,10 +90,9 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        response = np.zeros((X.shape[0], 1))
-        for i, xi in enumerate(X):
-            response[i] = self.__argmax_k(xi)
-        return response
+
+        likelihood = self.likelihood(X)
+        return np.argmax(likelihood, axis=0)
 
     def _class_likelihood(self, X, cls):
         dimension = 1 if len(X.shape) <= 1 else X.shape[1]
