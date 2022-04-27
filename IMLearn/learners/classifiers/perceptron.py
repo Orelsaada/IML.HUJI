@@ -80,8 +80,8 @@ class Perceptron(BaseEstimator):
         Fits model with or without an intercept depending on value of `self.fit_intercept_`
         """
         it = 0
-        w = np.zeros((X.shape[1]+1, 1))
         X = self.__add_ones_column(X) if self.include_intercept_ else X
+        w = np.zeros((X.shape[1], 1))
         while it < self.max_iter_:
             for i, xi in enumerate(X):
                 if (y[i] * (w.T @ xi.T)) <= 0:

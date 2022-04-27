@@ -1,5 +1,4 @@
 from IMLearn.learners.classifiers import Perceptron, LDA, GaussianNaiveBayes
-from IMLearn.utils import split_train_test
 from typing import Tuple
 from utils import *
 import plotly.graph_objects as go
@@ -143,5 +142,5 @@ def compare_gaussian_classifiers():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # run_perceptron()
+    run_perceptron()
     compare_gaussian_classifiers()

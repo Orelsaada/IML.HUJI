@@ -42,7 +42,7 @@ class GaussianNaiveBayes(BaseEstimator):
         """
         self.classes_ = np.unique(y)
         n_classes = len(self.classes_)
-        n_features = X.shape[1]
+        n_features = 1 if len(X.shape) <= 1 else X.shape[1]
         shape = (n_classes, n_features)
         self.pi_, self.mu_, self.vars_ = np.zeros(n_classes), np.zeros(shape), \
                                          np.zeros(shape)
@@ -51,7 +51,7 @@ class GaussianNaiveBayes(BaseEstimator):
             n_k = (y == cls).sum()
             self.pi_[i] = n_k / m
             self.mu_[i] = np.mean(X[y == cls], axis=0)
-            self.vars_[i] = np.var(X[y == cls], axis=0)
+            self.vars_[i] = np.var(X[y == cls], axis=0, ddof=1)
 
     def _pdf(self, cls_idx, xi):
         mu = self.mu_[cls_idx]
