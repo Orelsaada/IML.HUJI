@@ -1,5 +1,6 @@
 from typing import NoReturn
 from ...base import BaseEstimator
+from numpy.linalg import det, inv
 import numpy as np
 
 
@@ -87,6 +88,14 @@ class GaussianNaiveBayes(BaseEstimator):
 
         return np.array(pred)
 
+    def _class_likelihood(self, X, cls):
+        cov = np.diag(self.vars_[cls])
+        dimension = 1 if len(X.shape) <= 1 else X.shape[1]
+        diff = X - self.mu_[cls]
+        expo = np.sum(diff @ inv(cov) * diff, axis=1) * -0.5
+        factor = 1 / np.sqrt(((2 * np.pi) ** dimension) * det(cov))
+        return factor * np.exp(expo) * self.pi_[cls]
+
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
         Calculate the likelihood of a given data over the estimated model
@@ -106,12 +115,8 @@ class GaussianNaiveBayes(BaseEstimator):
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
 
         res = []
-        for xi in X:
-            sample_likelihood = []
-            for idx, cls in enumerate(self.classes_):
-                sample_likelihood.append(self._pdf(idx, xi))
-            res.append(sample_likelihood)
-
+        for i in range(len(self.classes_)):
+            res.append(self._class_likelihood(X, i))
         return np.array(res)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:

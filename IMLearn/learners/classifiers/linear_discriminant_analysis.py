@@ -111,6 +111,13 @@ class LDA(BaseEstimator):
             response[i] = self.__argmax_k(xi)
         return response
 
+    def _class_likelihood(self, X, cls):
+        dimension = 1 if len(X.shape) <= 1 else X.shape[1]
+        diff = X - self.mu_[cls]
+        expo = np.sum(diff @ self._cov_inv * diff, axis=1) * -0.5
+        factor = 1 / np.sqrt(((2 * np.pi) ** dimension) * det(self.cov_))
+        return factor * np.exp(expo) * self.pi_[cls]
+
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
         Calculate the likelihood of a given data over the estimated model
@@ -129,7 +136,10 @@ class LDA(BaseEstimator):
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
 
-        raise NotImplementedError()
+        res = []
+        for i in range(len(self.classes_)):
+            res.append(self._class_likelihood(X, i))
+        return np.array(res)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
