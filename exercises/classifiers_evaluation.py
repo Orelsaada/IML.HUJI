@@ -82,26 +82,6 @@ def get_ellipse(mu: np.ndarray, cov: np.ndarray):
     return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black")
 
 
-def predictions_plot(gnb_predict, lda_predict, X, y):
-    lda_predict = lda_predict.reshape(y.shape).astype(str)
-    y = y.astype(str)
-    fig = make_subplots(rows=1, cols=2)
-
-    fig.add_trace(
-        px.scatter(x=X[:, 0], y=X[:, 1], color=lda_predict),
-        row=1, col=1
-    )
-
-    fig.add_trace(
-        px.scatter(x=X[:, 0], y=X[:, 1]),
-        row=1, col=2
-    )
-
-    fig.update_layout(height=600, width=1500,
-                      title_text="Side By Side Subplots")
-    # fig = px.scatter(X, x=X[:, 0], y=X[:, 1], color=lda_predict)
-    fig.show()
-
 def compare_gaussian_classifiers():
     """
     Fit both Gaussian Naive Bayes and LDA classifiers on both gaussians1 and gaussians2 datasets
@@ -109,33 +89,57 @@ def compare_gaussian_classifiers():
     for f in ["gaussian1.npy", "gaussian2.npy"]:
         # Load dataset
         X, y = load_dataset(f)
-        X_pd = pd.DataFrame(X)
-        y = pd.Series(y)
 
         # Fit models and predict over training set
-        train_X, train_y, test_X, test_y = split_train_test(X_pd, y)
-        train_X, train_y, test_X, test_y = train_X.to_numpy(), \
-                                           train_y.to_numpy(), \
-                                           test_X.to_numpy(), test_y.to_numpy()
-        lda = LDA().fit(train_X, train_y)
-        gnb = GaussianNaiveBayes().fit(train_X, train_y)
+        lda = LDA().fit(X, y)
+        gnb = GaussianNaiveBayes().fit(X, y)
 
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
         # Create subplots
         from IMLearn.metrics import accuracy
-        predictions_plot(lda.predict(test_X), lda.predict(test_X), test_X,
-                         test_y)
+        lda_predict = lda.predict(X).reshape(y.shape)
+        lda_accuracy = round(accuracy(y, lda_predict), 2)
+        gnb_predict = gnb.predict(X).reshape(y.shape)
+        gnb_accuracy = round(accuracy(y, gnb_predict), 2)
 
         # Add traces for data-points setting symbols and colors
-        raise NotImplementedError()
+        fig = make_subplots(rows=1, cols=2,
+                            subplot_titles=[f'LDA - accuracy {lda_accuracy}',
+                                            f'GNB - accuracy {gnb_accuracy}'],
+                            horizontal_spacing=0.01, vertical_spacing=.03)
+
+        for i, prediction in enumerate([lda_predict, gnb_predict]):
+            fig.add_traces(go.Scatter(x=X[:, 0], y=X[:, 1],
+                                      mode="markers",
+                                      showlegend=False,
+                                      marker=dict(color=prediction,
+                                                  symbol=y,
+                                                  line=dict(color="black",
+                                                            width=1))),
+                           rows=(i // 3) + 1, cols=(i % 3) + 1)
+
+        fig.update_layout(
+            title=f'{f.split(".")[0]} Dataset',
+            margin=dict(t=100))
 
         # Add `X` dots specifying fitted Gaussians' means
-        raise NotImplementedError()
+        fig.add_trace(go.Scatter(x=lda.mu_[:, 0], y=lda.mu_[:, 1],
+                                 mode="markers", marker=dict(color="black",
+                                                             symbol="x-dot")),
+                                 row=1, col=1)
+        fig.add_trace(go.Scatter(x=gnb.mu_[:, 0], y=gnb.mu_[:, 1],
+                                 mode="markers", marker=dict(color="black",
+                                                             symbol="x-dot")),
+                                 row=1, col=2)
 
         # Add ellipses depicting the covariances of the fitted Gaussians
-        raise NotImplementedError()
+        for i in range(len(lda.classes_)):
+            fig.add_traces(get_ellipse(lda.mu_[i], lda.cov_), rows=1, cols=1)
+            fig.add_traces(get_ellipse(gnb.mu_[i],np.diag(gnb.vars_[i])),
+                           rows=1, cols=2)
 
+        fig.show()
 
 if __name__ == '__main__':
     np.random.seed(0)
