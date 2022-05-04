@@ -39,7 +39,13 @@ class DecisionStump(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        min_loss = np.inf
+        self.threshold_, self.j_, self.sign_ = 0, 0, 0
+        for sign, j_feature in product([-1, 1], range(X.shape[1])):
+            loss, threshold = self._find_threshold(X[:, j_feature], y, sign)
+            if loss < min_loss:
+                self.sign_, self.threshold_, self.j_ = sign, threshold, j_feature
+                min_loss = loss
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -63,7 +69,12 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        # 0s should be -sign and 1s should be sign.
+        prediction = X[:, self.j_] >= self.threshold_
+        # map 0s -> -1s and 1s to 1s.
+        prediction = (prediction * 2) - 1
+        # determine each by the sign we found in fit.
+        return prediction * self.sign_
 
     def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
         """
@@ -114,4 +125,6 @@ class DecisionStump(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        raise NotImplementedError()
+        from ...metrics import misclassification_error
+        # TODO should support weighted 
+        return misclassification_error(y.reshape((-1, 1)), self.predict(X))
