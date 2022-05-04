@@ -113,9 +113,9 @@ class DecisionStump(BaseEstimator):
         sort_idx = np.argsort(values)
         values, labels = values[sort_idx], labels[sort_idx]
         for i in range(n):
-            prediction = np.concatenate(-sign * np.ones(i),
-                                        sign * np.ones(n - i))
-            loss = misclassification_error(labels.reshape((-1, 1)), prediction)
+            prediction = np.concatenate((-sign * np.ones(i),
+                                        sign * np.ones(n - i)))
+            loss = misclassification_error(labels, prediction)
             if loss < min_loss:
                 threshold = i
                 min_loss = loss
